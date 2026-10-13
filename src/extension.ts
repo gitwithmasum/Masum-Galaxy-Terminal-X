@@ -10,6 +10,21 @@ const themes: Theme[] = ['blue-circuit', 'black-gold', 'galaxy-purple', 'minimal
 
 export function activate(context: vscode.ExtensionContext): void {
   let panel: vscode.WebviewPanel | undefined;
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  const workspaceKey = folder ? folder.uri.toString() : 'no-workspace';
+  const favoriteKey = 'favorites:' + workspaceKey;
+  const historyKey = 'stagedHistory:' + workspaceKey;
+  const favorites = (): string[] => context.workspaceState.get<string[]>(favoriteKey, []);
+  const history = (): string[] => context.workspaceState.get<string[]>(historyKey, []);
+  const remember = async (command: string): Promise<void> => {
+    await context.workspaceState.update(historyKey, [command, ...history().filter(x => x !== command)].slice(0, 30));
+    updatePanel();
+  };
+  const toggleFavorite = async (command: string): Promise<void> => {
+    const items = favorites();
+    await context.workspaceState.update(favoriteKey, items.includes(command) ? items.filter(x => x !== command) : [command, ...items].slice(0, 50));
+    updatePanel();
+  };
   const config = () => vscode.workspace.getConfiguration(prefix);
   const currentTheme = (): Theme => {
     const configured = config().get<string>('theme', 'blue-circuit');
@@ -48,7 +63,12 @@ export function activate(context: vscode.ExtensionContext): void {
     const t = terminal();
     // Always stage the command for review; the developer presses Enter to execute.
     t.sendText(command, false);
-    void vscode.window.showInformationMessage('Command inserted in terminal. Press Enter to run it.');
+    void remember(command);
+    void vscode.window.showInformationMessage('Command staged for review. Press Enter to run.');
+  };
+  const stageFromHistory = async (): Promise<void> => {
+    const picked = await vscode.window.showQuickPick(history(), { placeHolder: 'Recently staged commands (not shell execution history)' });
+    if (picked) { sendCommand(picked); }
   };
   const runSaved = async (): Promise<void> => {
     const list = commands();
@@ -59,15 +79,16 @@ export function activate(context: vscode.ExtensionContext): void {
     if (picked) { sendCommand(picked.command); }
   };
   const updatePanel = (): void => {
-    if (panel) { panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands(), config().get<ShellProfile>('shellProfile', 'powershell'), config().get<PromptStyle>('promptStyle', 'classic')); }
+    if (panel) { panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands(), config().get<ShellProfile>('shellProfile', 'powershell'), config().get<PromptStyle>('promptStyle', 'classic'), favorites(), history()); }
   };
   context.subscriptions.push(
     vscode.commands.registerCommand('galaxyTerminal.newTerminal', () => terminal()),
     vscode.commands.registerCommand('galaxyTerminal.runSavedCommand', runSaved),
+    vscode.commands.registerCommand('galaxyTerminal.stageFromHistory', stageFromHistory),
     vscode.commands.registerCommand('galaxyTerminal.openDashboard', () => {
       if (panel) { panel.reveal(); updatePanel(); return; }
       panel = vscode.window.createWebviewPanel('galaxyTerminalDashboard', 'Galaxy Terminal X', vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
-      panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands(), config().get<ShellProfile>('shellProfile', 'powershell'), config().get<PromptStyle>('promptStyle', 'classic'));
+      panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands(), config().get<ShellProfile>('shellProfile', 'powershell'), config().get<PromptStyle>('promptStyle', 'classic'), favorites(), history());
       panel.webview.onDidReceiveMessage(async (message: unknown) => {
         if (!message || typeof message !== 'object') { return; }
         const request = message as { type?: string; index?: number; theme?: string; value?: string };
@@ -75,6 +96,18 @@ export function activate(context: vscode.ExtensionContext): void {
         if (request.type === 'runSaved' && Number.isInteger(request.index)) {
           const item = commands()[request.index!];
           if (item) { sendCommand(item.command); }
+        }
+        if (request.type === 'stageRecent' && Number.isInteger(request.index)) {
+          const item = history()[request.index!];
+          if (item) { sendCommand(item); }
+        }
+        if (request.type === 'favorite' && Number.isInteger(request.index)) {
+          const item = commands()[request.index!];
+          if (item) { await toggleFavorite(item.command); }
+        }
+        if (request.type === 'clearHistory') {
+          await context.workspaceState.update(historyKey, []);
+          updatePanel();
         }
         if (request.type === 'switchTheme' && themes.includes(request.theme as Theme)) {
           await config().update('theme', request.theme, vscode.ConfigurationTarget.Global);
@@ -99,10 +132,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void { /* Disposables are managed by VS Code. */ }
 
-function dashboardHtml(webview: vscode.Webview, theme: Theme, saved: SavedCommand[], shell: ShellProfile, promptStyle: PromptStyle): string {
+function dashboardHtml(webview: vscode.Webview, theme: Theme, saved: SavedCommand[], shell: ShellProfile, promptStyle: PromptStyle, favorites: string[], history: string[]): string {
   const nonce = randomNonce();
   const escaped = (value: string): string => value.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!));
-  const buttons = saved.map((item, index) => `<button class="command" data-index="${index}"><span class="spark">›</span><strong>${escaped(item.label)}</strong><small>${escaped(item.command)}</small></button>`).join('');
+  const buttons = saved.map((item, index) => `<div class="command-wrap"><button class="command" data-index="${index}"><span class="spark">›</span><strong>${escaped(item.label)}</strong><small>${escaped(item.command)}</small></button><button class="favorite" aria-label="${favorites.includes(item.command) ? 'Unpin' : 'Pin'} ${escaped(item.label)}" data-favorite="${index}">${favorites.includes(item.command) ? '★' : '☆'}</button></div>`).join('');
+  const pinned = saved.filter(item => favorites.includes(item.command));
+  const recentButtons = history.map((command, index) => `<button class="recent" data-recent="${index}"><span>↳</span><code>${escaped(command)}</code></button>`).join('');
+  const pinnedLabels = pinned.map(item => `<span class="pinned-item">${escaped(item.label)}</span>`).join('');
   const themeOptions = themes.map(id => `<option value="${id}" ${theme === id ? 'selected' : ''}>${id.replace(/-/g, ' ').replace(/\b\w/g, x => x.toUpperCase())}</option>`).join('');
   const shellOptions = (['powershell','cmd','default'] as ShellProfile[]).map(id => `<option value="${id}" ${shell === id ? 'selected' : ''}>${id === 'powershell' ? 'Galaxy PowerShell' : id === 'cmd' ? 'Windows CMD' : 'VS Code Default'}</option>`).join('');
   const styleOptions = (['classic','compact'] as PromptStyle[]).map(id => `<option value="${id}" ${promptStyle === id ? 'selected' : ''}>${id === 'classic' ? 'Classic Galaxy' : 'Compact Galaxy'}</option>`).join('');
@@ -138,8 +174,11 @@ button:hover,select:focus {border-color:var(--accent);outline-color:var(--accent
 label {display:block;margin-bottom:5px;color:var(--accent);font-size:12px}
 .terminal {font:13px ui-monospace,monospace;color:var(--accent);padding:14px;background:#0006;border:1px solid var(--border);border-radius:9px;margin-top:14px}
 footer {margin-top:22px;font-size:12px;opacity:.7}
+.command-wrap{position:relative;min-width:0}.command-wrap .command{width:100%;padding-right:45px}.favorite{position:absolute;right:8px;top:8px;color:var(--accent);font-size:19px;padding:4px 8px}
+.recent-list{display:grid;gap:8px;margin-top:13px}.recent{display:flex;gap:12px;align-items:center;text-align:left;min-width:0}.recent code{white-space:normal;overflow-wrap:anywhere}.recent span{color:var(--accent)}
+.pinned-item{display:inline-block;padding:7px 11px;margin:5px 7px 0 0;border:1px solid var(--border);border-radius:999px;background:var(--panel)}.secondary{font-size:12px;opacity:.7}.section-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .profile-controls{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}.profile-controls>div{flex:1 1 180px}.profile-controls select{width:100%;min-height:42px}.profile-controls label{font-size:11px;letter-spacing:.08em;text-transform:uppercase}
-</style></head><body data-theme="${theme}"><div class="backdrop" aria-hidden="true"></div><main><header><div><div class="kicker">MASUM GALAXY / DEVELOPER TOOLS</div><h1>Terminal X <span style="color:var(--accent)">⌁</span></h1><p>Command Center · Native VS Code terminals · v1.2</p></div><div class="theme-control"><label for="theme">PERSONALIZATION <span aria-hidden="true">·</span> THEME</label><div class="theme-select-wrap"><span class="theme-swatch" aria-hidden="true"></span><select id="theme" aria-label="Choose dashboard theme">${themeOptions}</select><span class="theme-chevron" aria-hidden="true"></span></div></div></header><section class="panel"><div class="controls"><div><h2>Terminal Launcher</h2><p>Open a real integrated terminal inside VS Code.</p></div><button class="primary" id="new">+ New Terminal</button></div><div class="profile-controls"><div><label for="shellProfile">Terminal Profile</label><select id="shellProfile" aria-label="Terminal profile">${shellOptions}</select></div><div><label for="promptStyle">Galaxy Prompt Style</label><select id="promptStyle" aria-label="Prompt style">${styleOptions}</select></div></div><div class="terminal">➜ ~ Galaxy Terminal X / Ready<br>Commands are staged for review — press Enter in terminal to run.</div></section><section class="panel"><h2>Quick Commands</h2><p>Configure shortcuts via Settings → Galaxy Terminal → Saved Commands.</p><div class="grid">${buttons || '<p>No saved commands configured.</p>'}</div></section><footer>Blue Circuit theme foundation · More background images and themes can be added later.</footer></main><script nonce="${nonce}">const vscode=acquireVsCodeApi();document.getElementById('new').addEventListener('click',()=>vscode.postMessage({type:'newTerminal'}));document.getElementById('theme').addEventListener('change',e=>vscode.postMessage({type:'switchTheme',theme:e.target.value}));document.getElementById('shellProfile').addEventListener('change',e=>vscode.postMessage({type:'shellProfile',value:e.target.value}));document.getElementById('promptStyle').addEventListener('change',e=>vscode.postMessage({type:'promptStyle',value:e.target.value}));document.querySelectorAll('[data-index]').forEach(btn=>btn.addEventListener('click',()=>vscode.postMessage({type:'runSaved',index:Number(btn.dataset.index)})));</script></body></html>`;
+</style></head><body data-theme="${theme}"><div class="backdrop" aria-hidden="true"></div><main><header><div><div class="kicker">MASUM GALAXY / DEVELOPER TOOLS</div><h1>Terminal X <span style="color:var(--accent)">⌁</span></h1><p>Command Center · Native VS Code terminals · v1.3</p></div><div class="theme-control"><label for="theme">PERSONALIZATION <span aria-hidden="true">·</span> THEME</label><div class="theme-select-wrap"><span class="theme-swatch" aria-hidden="true"></span><select id="theme" aria-label="Choose dashboard theme">${themeOptions}</select><span class="theme-chevron" aria-hidden="true"></span></div></div></header><section class="panel"><div class="controls"><div><h2>Terminal Launcher</h2><p>Open a real integrated terminal inside VS Code.</p></div><button class="primary" id="new">+ New Terminal</button></div><div class="profile-controls"><div><label for="shellProfile">Terminal Profile</label><select id="shellProfile" aria-label="Terminal profile">${shellOptions}</select></div><div><label for="promptStyle">Galaxy Prompt Style</label><select id="promptStyle" aria-label="Prompt style">${styleOptions}</select></div></div><div class="terminal">➜ ~ Galaxy Terminal X / Ready<br>Commands are staged for review — press Enter in terminal to run.</div></section><section class="panel"><h2>Quick Commands</h2><p>Configure shortcuts via Settings → Galaxy Terminal → Saved Commands.</p><div class="grid">${buttons || '<p>No saved commands configured.</p>'}</div></section><section class="panel"><div class="section-heading"><h2>Favorite Commands</h2><span class="secondary">Workspace-scoped</span></div><div>${pinnedLabels || '<p>No favorites yet. Use the star on a command to pin it.</p>'}</div></section><section class="panel"><div class="section-heading"><h2>Recently Staged Commands</h2><button id="clearHistory">Clear History</button></div><p class="secondary">Only commands staged by Galaxy Terminal X are recorded, not the full shell history.</p><div class="recent-list">${recentButtons || '<p>No commands staged yet.</p>'}</div></section><footer>Blue Circuit theme foundation · More background images and themes can be added later.</footer></main><script nonce="${nonce}">const vscode=acquireVsCodeApi();document.getElementById('new').addEventListener('click',()=>vscode.postMessage({type:'newTerminal'}));document.getElementById('theme').addEventListener('change',e=>vscode.postMessage({type:'switchTheme',theme:e.target.value}));document.getElementById('shellProfile').addEventListener('change',e=>vscode.postMessage({type:'shellProfile',value:e.target.value}));document.getElementById('promptStyle').addEventListener('change',e=>vscode.postMessage({type:'promptStyle',value:e.target.value}));document.querySelectorAll('[data-index]').forEach(btn=>btn.addEventListener('click',()=>vscode.postMessage({type:'runSaved',index:Number(btn.dataset.index)})));document.querySelectorAll('[data-favorite]').forEach(btn=>btn.addEventListener('click',()=>vscode.postMessage({type:'favorite',index:Number(btn.dataset.favorite)})));document.querySelectorAll('[data-recent]').forEach(btn=>btn.addEventListener('click',()=>vscode.postMessage({type:'stageRecent',index:Number(btn.dataset.recent)})));document.getElementById('clearHistory').addEventListener('click',()=>vscode.postMessage({type:'clearHistory'}));</script></body></html>`;
 }
 function randomNonce(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

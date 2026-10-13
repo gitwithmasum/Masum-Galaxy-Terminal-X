@@ -2,6 +2,14 @@
 
 A futuristic VS Code terminal launcher and quick-command dashboard.
 
+## v1.3 — Smart Terminal Productivity
+- Star or unstar saved commands in the dashboard; favorites are saved per workspace.
+- Recently **staged** commands are displayed in dashboard and available through **Galaxy Terminal X: Stage From History**.
+- History is intentionally not an execution log of the native shell. It stores up to 30 staged commands and can be cleared.
+- Workspace-specific commands: set `galaxyTerminal.savedCommands` in your project's `.vscode/settings.json`; other workspaces may define different lists.
+- Favorites and history are saved using VS Code workspace state, not uploaded anywhere.
+- All actions stage text for review; user presses Enter to run commands.
+
 ## v1.2 — Terminal Profiles & Prompt Customization
 - Dashboard profile selector: Galaxy PowerShell, Windows CMD or VS Code Default.
 - Prompt styles: Classic Galaxy and Compact Galaxy (PowerShell only).
