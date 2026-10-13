@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'node:path';
 
 type Theme = 'blue-circuit' | 'black-gold' | 'galaxy-purple' | 'minimal-dark';
 type SavedCommand = { label: string; command: string };
@@ -17,7 +18,16 @@ export function activate(context: vscode.ExtensionContext): void {
     return items.filter(item => typeof item.label === 'string' && typeof item.command === 'string' && Boolean(item.command.trim()));
   };
   const terminal = (name = 'Galaxy Terminal X'): vscode.Terminal => {
-    const t = vscode.window.createTerminal({ name });
+    const enablePrompt = process.platform === 'win32' && config().get<boolean>('enableGalaxyPrompt', true);
+    const script = path.join(context.extensionPath, 'scripts', 'galaxy-prompt.ps1');
+    const t = enablePrompt
+      ? vscode.window.createTerminal({
+          name,
+          shellPath: 'powershell.exe',
+          shellArgs: ['-NoLogo', '-NoExit', '-File', script],
+          env: { GALAXY_TERMINAL_THEME: currentTheme() }
+        })
+      : vscode.window.createTerminal({ name });
     t.show();
     return t;
   };

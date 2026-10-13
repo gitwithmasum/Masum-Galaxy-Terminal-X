@@ -2,6 +2,9 @@
 
 A futuristic VS Code terminal launcher and quick-command dashboard.
 
+## v1.1 — Futuristic Native PowerShell Prompt
+On Windows, **Galaxy Terminal X: New Terminal** now launches a dedicated PowerShell session with a startup banner, location-aware neon prompt and theme-specific colors. This is a real terminal, not an emulated shell. It does **not** change the global PowerShell profile or VS Code's default terminal. Theme updates apply to newly created terminal sessions. Disable with `galaxyTerminal.enableGalaxyPrompt: false`. On macOS/Linux, the default terminal is used.
+
 ## v1.0 Foundation
 - **Galaxy Terminal X: Open Dashboard** from Command Palette
 - **Galaxy Terminal X: New Terminal** to open a native VS Code terminal
@@ -33,6 +36,14 @@ VS Code Settings → search `galaxyTerminal.savedCommands`, edit in `settings.js
 ```
 
 Select a command, inspect it in the native VS Code terminal, then press Enter to execute.
+
+## v1.1 quick start
+1. `npm install` and `npm run compile`.
+2. F5 → Extension Development Host.
+3. Run **Galaxy Terminal X: New Terminal** from Command Palette, or click **+ New Terminal** in the Galaxy dashboard.
+4. Select a new theme in the dashboard and open another Galaxy terminal to see its colors.
+
+**Note:** The regular VS Code Terminal > New Terminal menu remains unchanged; VS Code extensions cannot globally skin the terminal panel.
 
 ## Roadmap
 - Import the supplied Blue Circuit background artwork as `media/themes/blue-circuit-bg.png`

@@ -1,8 +1,8 @@
 {
   "name": "masum-galaxy-terminal-x",
   "displayName": "Masum Galaxy Terminal X",
-  "description": "Futuristic integrated terminal command center with workspace shortcuts and extensible themes.",
-  "version": "1.0.0",
+  "description": "Futuristic Galaxy terminal launcher with an optional themed PowerShell prompt, command dashboard and saved presets.",
+  "version": "1.1.0",
   "publisher": "gitwithmasum",
   "license": "MIT",
   "engines": {
@@ -89,6 +89,11 @@
             }
           },
           "description": "Quick commands for your terminal. Review commands before running."
+        },
+        "galaxyTerminal.enableGalaxyPrompt": {
+          "type": "boolean",
+          "default": true,
+          "description": "On Windows, launch a dedicated PowerShell terminal with a Galaxy-themed startup banner and prompt. Does not alter your PowerShell profile."
         }
       }
     }
