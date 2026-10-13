@@ -19,6 +19,11 @@ $vertical = [char]0x2502
 $pointer = [char]0x276F
 
 function global:prompt {
+    if ($env:GALAXY_TERMINAL_PROMPT_STYLE -eq 'compact') {
+        Write-Host ('  ' + [char]0x276F + ' ') -NoNewline -ForegroundColor $global:GalaxyTerminalPalette.Accent
+        Write-Host ((Get-Location).Path + ' ') -NoNewline -ForegroundColor Gray
+        return '> '
+    }
     $p = $global:GalaxyTerminalPalette
     Write-Host ''
     Write-Host ('  ' + [char]0x250C + [char]0x2500 + ' ') -NoNewline -ForegroundColor $p.Secondary

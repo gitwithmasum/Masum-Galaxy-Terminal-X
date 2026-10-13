@@ -2,7 +2,7 @@
   "name": "masum-galaxy-terminal-x",
   "displayName": "Masum Galaxy Terminal X",
   "description": "Futuristic Galaxy terminal launcher with an optional themed PowerShell prompt, command dashboard and saved presets.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "gitwithmasum",
   "license": "MIT",
   "engines": {
@@ -94,6 +94,25 @@
           "type": "boolean",
           "default": true,
           "description": "On Windows, launch a dedicated PowerShell terminal with a Galaxy-themed startup banner and prompt. Does not alter your PowerShell profile."
+        },
+        "galaxyTerminal.shellProfile": {
+          "type": "string",
+          "default": "powershell",
+          "enum": [
+            "powershell",
+            "cmd",
+            "default"
+          ],
+          "description": "Choose shell for new Galaxy terminals. CMD supported on Windows; default uses VS Code's selected shell."
+        },
+        "galaxyTerminal.promptStyle": {
+          "type": "string",
+          "default": "classic",
+          "enum": [
+            "classic",
+            "compact"
+          ],
+          "description": "Prompt layout for new Galaxy PowerShell sessions."
         }
       }
     }

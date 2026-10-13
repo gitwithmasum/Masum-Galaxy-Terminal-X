@@ -2,6 +2,13 @@
 
 A futuristic VS Code terminal launcher and quick-command dashboard.
 
+## v1.2 — Terminal Profiles & Prompt Customization
+- Dashboard profile selector: Galaxy PowerShell, Windows CMD or VS Code Default.
+- Prompt styles: Classic Galaxy and Compact Galaxy (PowerShell only).
+- Theme and profile selections are stored in VS Code settings and affect **new** sessions.
+- Windows CMD and PowerShell are Windows-only; on other operating systems the VS Code default shell is used.
+- No changes to the global VS Code terminal, user PowerShell profile or execution policy.
+
 ## v1.1 — Futuristic Native PowerShell Prompt
 On Windows, **Galaxy Terminal X: New Terminal** now launches a dedicated PowerShell session with a startup banner, location-aware neon prompt and theme-specific colors. This is a real terminal, not an emulated shell. It does **not** change the global PowerShell profile or VS Code's default terminal. Theme updates apply to newly created terminal sessions. Disable with `galaxyTerminal.enableGalaxyPrompt: false`. On macOS/Linux, the default terminal is used.
 

@@ -3,6 +3,8 @@ import * as path from 'node:path';
 
 type Theme = 'blue-circuit' | 'black-gold' | 'galaxy-purple' | 'minimal-dark';
 type SavedCommand = { label: string; command: string };
+type ShellProfile = 'powershell' | 'cmd' | 'default';
+type PromptStyle = 'classic' | 'compact';
 const prefix = 'galaxyTerminal';
 const themes: Theme[] = ['blue-circuit', 'black-gold', 'galaxy-purple', 'minimal-dark'];
 
@@ -18,16 +20,26 @@ export function activate(context: vscode.ExtensionContext): void {
     return items.filter(item => typeof item.label === 'string' && typeof item.command === 'string' && Boolean(item.command.trim()));
   };
   const terminal = (name = 'Galaxy Terminal X'): vscode.Terminal => {
-    const enablePrompt = process.platform === 'win32' && config().get<boolean>('enableGalaxyPrompt', true);
+    const profile = config().get<ShellProfile>('shellProfile', 'powershell');
+    const enablePrompt = process.platform === 'win32' && profile === 'powershell' && config().get<boolean>('enableGalaxyPrompt', true);
     const script = path.join(context.extensionPath, 'scripts', 'galaxy-prompt.ps1');
-    const t = enablePrompt
-      ? vscode.window.createTerminal({
-          name,
-          shellPath: 'powershell.exe',
-          shellArgs: ['-NoLogo', '-NoExit', '-File', script],
-          env: { GALAXY_TERMINAL_THEME: currentTheme() }
-        })
-      : vscode.window.createTerminal({ name });
+    let options: vscode.TerminalOptions = { name };
+    if (process.platform === 'win32' && profile === 'cmd') {
+      options = { name, shellPath: 'cmd.exe' };
+    } else if (enablePrompt) {
+      options = {
+        name,
+        shellPath: 'powershell.exe',
+        shellArgs: ['-NoLogo', '-NoExit', '-File', script],
+        env: {
+          GALAXY_TERMINAL_THEME: currentTheme(),
+          GALAXY_TERMINAL_PROMPT_STYLE: config().get<PromptStyle>('promptStyle', 'classic')
+        }
+      };
+    } else if (process.platform === 'win32' && profile === 'powershell') {
+      options = { name, shellPath: 'powershell.exe' };
+    }
+    const t = vscode.window.createTerminal(options);
     t.show();
     return t;
   };
@@ -47,7 +59,7 @@ export function activate(context: vscode.ExtensionContext): void {
     if (picked) { sendCommand(picked.command); }
   };
   const updatePanel = (): void => {
-    if (panel) { panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands()); }
+    if (panel) { panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands(), config().get<ShellProfile>('shellProfile', 'powershell'), config().get<PromptStyle>('promptStyle', 'classic')); }
   };
   context.subscriptions.push(
     vscode.commands.registerCommand('galaxyTerminal.newTerminal', () => terminal()),
@@ -55,10 +67,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('galaxyTerminal.openDashboard', () => {
       if (panel) { panel.reveal(); updatePanel(); return; }
       panel = vscode.window.createWebviewPanel('galaxyTerminalDashboard', 'Galaxy Terminal X', vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
-      panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands());
+      panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands(), config().get<ShellProfile>('shellProfile', 'powershell'), config().get<PromptStyle>('promptStyle', 'classic'));
       panel.webview.onDidReceiveMessage(async (message: unknown) => {
         if (!message || typeof message !== 'object') { return; }
-        const request = message as { type?: string; index?: number; theme?: string };
+        const request = message as { type?: string; index?: number; theme?: string; value?: string };
         if (request.type === 'newTerminal') { terminal(); }
         if (request.type === 'runSaved' && Number.isInteger(request.index)) {
           const item = commands()[request.index!];
@@ -66,6 +78,14 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         if (request.type === 'switchTheme' && themes.includes(request.theme as Theme)) {
           await config().update('theme', request.theme, vscode.ConfigurationTarget.Global);
+          updatePanel();
+        }
+        if (request.type === 'shellProfile' && ['powershell', 'cmd', 'default'].includes(request.value ?? '')) {
+          await config().update('shellProfile', request.value, vscode.ConfigurationTarget.Global);
+          updatePanel();
+        }
+        if (request.type === 'promptStyle' && ['classic', 'compact'].includes(request.value ?? '')) {
+          await config().update('promptStyle', request.value, vscode.ConfigurationTarget.Global);
           updatePanel();
         }
       }, undefined, context.subscriptions);
@@ -79,11 +99,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void { /* Disposables are managed by VS Code. */ }
 
-function dashboardHtml(webview: vscode.Webview, theme: Theme, saved: SavedCommand[]): string {
+function dashboardHtml(webview: vscode.Webview, theme: Theme, saved: SavedCommand[], shell: ShellProfile, promptStyle: PromptStyle): string {
   const nonce = randomNonce();
   const escaped = (value: string): string => value.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!));
   const buttons = saved.map((item, index) => `<button class="command" data-index="${index}"><span class="spark">›</span><strong>${escaped(item.label)}</strong><small>${escaped(item.command)}</small></button>`).join('');
   const themeOptions = themes.map(id => `<option value="${id}" ${theme === id ? 'selected' : ''}>${id.replace(/-/g, ' ').replace(/\b\w/g, x => x.toUpperCase())}</option>`).join('');
+  const shellOptions = (['powershell','cmd','default'] as ShellProfile[]).map(id => `<option value="${id}" ${shell === id ? 'selected' : ''}>${id === 'powershell' ? 'Galaxy PowerShell' : id === 'cmd' ? 'Windows CMD' : 'VS Code Default'}</option>`).join('');
+  const styleOptions = (['classic','compact'] as PromptStyle[]).map(id => `<option value="${id}" ${promptStyle === id ? 'selected' : ''}>${id === 'classic' ? 'Classic Galaxy' : 'Compact Galaxy'}</option>`).join('');
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';"><title>Galaxy Terminal X</title><style nonce="${nonce}">
 :root { color-scheme: dark; font: 14px system-ui, sans-serif; }
 * { box-sizing: border-box; }
@@ -116,7 +138,8 @@ button:hover,select:focus {border-color:var(--accent);outline-color:var(--accent
 label {display:block;margin-bottom:5px;color:var(--accent);font-size:12px}
 .terminal {font:13px ui-monospace,monospace;color:var(--accent);padding:14px;background:#0006;border:1px solid var(--border);border-radius:9px;margin-top:14px}
 footer {margin-top:22px;font-size:12px;opacity:.7}
-</style></head><body data-theme="${theme}"><div class="backdrop" aria-hidden="true"></div><main><header><div><div class="kicker">MASUM GALAXY / DEVELOPER TOOLS</div><h1>Terminal X <span style="color:var(--accent)">⌁</span></h1><p>Command Center · Native VS Code terminals · v1.0</p></div><div class="theme-control"><label for="theme">PERSONALIZATION <span aria-hidden="true">·</span> THEME</label><div class="theme-select-wrap"><span class="theme-swatch" aria-hidden="true"></span><select id="theme" aria-label="Choose dashboard theme">${themeOptions}</select><span class="theme-chevron" aria-hidden="true"></span></div></div></header><section class="panel"><div class="controls"><div><h2>Terminal Launcher</h2><p>Open a real integrated terminal inside VS Code.</p></div><button class="primary" id="new">+ New Terminal</button></div><div class="terminal">➜ ~ Galaxy Terminal X / Ready<br>Commands are staged for review — press Enter in terminal to run.</div></section><section class="panel"><h2>Quick Commands</h2><p>Configure shortcuts via Settings → Galaxy Terminal → Saved Commands.</p><div class="grid">${buttons || '<p>No saved commands configured.</p>'}</div></section><footer>Blue Circuit theme foundation · More background images and themes can be added later.</footer></main><script nonce="${nonce}">const vscode=acquireVsCodeApi();document.getElementById('new').addEventListener('click',()=>vscode.postMessage({type:'newTerminal'}));document.getElementById('theme').addEventListener('change',e=>vscode.postMessage({type:'switchTheme',theme:e.target.value}));document.querySelectorAll('[data-index]').forEach(btn=>btn.addEventListener('click',()=>vscode.postMessage({type:'runSaved',index:Number(btn.dataset.index)})));</script></body></html>`;
+.profile-controls{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}.profile-controls>div{flex:1 1 180px}.profile-controls select{width:100%;min-height:42px}.profile-controls label{font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+</style></head><body data-theme="${theme}"><div class="backdrop" aria-hidden="true"></div><main><header><div><div class="kicker">MASUM GALAXY / DEVELOPER TOOLS</div><h1>Terminal X <span style="color:var(--accent)">⌁</span></h1><p>Command Center · Native VS Code terminals · v1.2</p></div><div class="theme-control"><label for="theme">PERSONALIZATION <span aria-hidden="true">·</span> THEME</label><div class="theme-select-wrap"><span class="theme-swatch" aria-hidden="true"></span><select id="theme" aria-label="Choose dashboard theme">${themeOptions}</select><span class="theme-chevron" aria-hidden="true"></span></div></div></header><section class="panel"><div class="controls"><div><h2>Terminal Launcher</h2><p>Open a real integrated terminal inside VS Code.</p></div><button class="primary" id="new">+ New Terminal</button></div><div class="profile-controls"><div><label for="shellProfile">Terminal Profile</label><select id="shellProfile" aria-label="Terminal profile">${shellOptions}</select></div><div><label for="promptStyle">Galaxy Prompt Style</label><select id="promptStyle" aria-label="Prompt style">${styleOptions}</select></div></div><div class="terminal">➜ ~ Galaxy Terminal X / Ready<br>Commands are staged for review — press Enter in terminal to run.</div></section><section class="panel"><h2>Quick Commands</h2><p>Configure shortcuts via Settings → Galaxy Terminal → Saved Commands.</p><div class="grid">${buttons || '<p>No saved commands configured.</p>'}</div></section><footer>Blue Circuit theme foundation · More background images and themes can be added later.</footer></main><script nonce="${nonce}">const vscode=acquireVsCodeApi();document.getElementById('new').addEventListener('click',()=>vscode.postMessage({type:'newTerminal'}));document.getElementById('theme').addEventListener('change',e=>vscode.postMessage({type:'switchTheme',theme:e.target.value}));document.getElementById('shellProfile').addEventListener('change',e=>vscode.postMessage({type:'shellProfile',value:e.target.value}));document.getElementById('promptStyle').addEventListener('change',e=>vscode.postMessage({type:'promptStyle',value:e.target.value}));document.querySelectorAll('[data-index]').forEach(btn=>btn.addEventListener('click',()=>vscode.postMessage({type:'runSaved',index:Number(btn.dataset.index)})));</script></body></html>`;
 }
 function randomNonce(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
