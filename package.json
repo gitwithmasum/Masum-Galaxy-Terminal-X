@@ -2,7 +2,7 @@
   "name": "masum-galaxy-terminal-x",
   "displayName": "Masum Galaxy Terminal X",
   "description": "Futuristic Galaxy terminal launcher with an optional themed PowerShell prompt, command dashboard and saved presets.",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "publisher": "gitwithmasum",
   "license": "MIT",
   "engines": {

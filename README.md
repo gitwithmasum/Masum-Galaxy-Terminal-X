@@ -2,6 +2,12 @@
 
 A futuristic VS Code terminal launcher and quick-command dashboard.
 
+## v1.4 — Advanced Terminal UI & Theme Gallery
+- New dashboard status tiles and interactive theme gallery.
+- Bundled circuit-inspired **SVG** for Blue Circuit (not the original uploaded PNG).
+- Theme cards and dropdown persist the selected palette in VS Code settings.
+- Native terminal profile, prompt, favorites and staging features are preserved.
+
 ## v1.3 — Smart Terminal Productivity
 - Star or unstar saved commands in the dashboard; favorites are saved per workspace.
 - Recently **staged** commands are displayed in dashboard and available through **Galaxy Terminal X: Stage From History**.
