@@ -1,0 +1,105 @@
+import * as vscode from 'vscode';
+
+type Theme = 'blue-circuit' | 'black-gold' | 'galaxy-purple' | 'minimal-dark';
+type SavedCommand = { label: string; command: string };
+const prefix = 'galaxyTerminal';
+const themes: Theme[] = ['blue-circuit', 'black-gold', 'galaxy-purple', 'minimal-dark'];
+
+export function activate(context: vscode.ExtensionContext): void {
+  let panel: vscode.WebviewPanel | undefined;
+  const config = () => vscode.workspace.getConfiguration(prefix);
+  const currentTheme = (): Theme => {
+    const configured = config().get<string>('theme', 'blue-circuit');
+    return themes.includes(configured as Theme) ? configured as Theme : 'blue-circuit';
+  };
+  const commands = (): SavedCommand[] => {
+    const items = config().get<SavedCommand[]>('savedCommands', []);
+    return items.filter(item => typeof item.label === 'string' && typeof item.command === 'string' && Boolean(item.command.trim()));
+  };
+  const terminal = (name = 'Galaxy Terminal X'): vscode.Terminal => {
+    const t = vscode.window.createTerminal({ name });
+    t.show();
+    return t;
+  };
+  const sendCommand = (command: string): void => {
+    if (!command.trim()) { return; }
+    const t = terminal();
+    // Always stage the command for review; the developer presses Enter to execute.
+    t.sendText(command, false);
+    void vscode.window.showInformationMessage('Command inserted in terminal. Press Enter to run it.');
+  };
+  const runSaved = async (): Promise<void> => {
+    const list = commands();
+    const picked = await vscode.window.showQuickPick(
+      list.map(item => ({ label: item.label, description: item.command, command: item.command })),
+      { placeHolder: 'Choose a command to stage in a terminal' }
+    );
+    if (picked) { sendCommand(picked.command); }
+  };
+  const updatePanel = (): void => {
+    if (panel) { panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands()); }
+  };
+  context.subscriptions.push(
+    vscode.commands.registerCommand('galaxyTerminal.newTerminal', () => terminal()),
+    vscode.commands.registerCommand('galaxyTerminal.runSavedCommand', runSaved),
+    vscode.commands.registerCommand('galaxyTerminal.openDashboard', () => {
+      if (panel) { panel.reveal(); updatePanel(); return; }
+      panel = vscode.window.createWebviewPanel('galaxyTerminalDashboard', 'Galaxy Terminal X', vscode.ViewColumn.One, { enableScripts: true, retainContextWhenHidden: true });
+      panel.webview.html = dashboardHtml(panel.webview, currentTheme(), commands());
+      panel.webview.onDidReceiveMessage(async (message: unknown) => {
+        if (!message || typeof message !== 'object') { return; }
+        const request = message as { type?: string; index?: number; theme?: string };
+        if (request.type === 'newTerminal') { terminal(); }
+        if (request.type === 'runSaved' && Number.isInteger(request.index)) {
+          const item = commands()[request.index!];
+          if (item) { sendCommand(item.command); }
+        }
+        if (request.type === 'switchTheme' && themes.includes(request.theme as Theme)) {
+          await config().update('theme', request.theme, vscode.ConfigurationTarget.Global);
+          updatePanel();
+        }
+      }, undefined, context.subscriptions);
+      panel.onDidDispose(() => { panel = undefined; }, undefined, context.subscriptions);
+    }),
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration(prefix)) { updatePanel(); }
+    })
+  );
+}
+
+export function deactivate(): void { /* Disposables are managed by VS Code. */ }
+
+function dashboardHtml(webview: vscode.Webview, theme: Theme, saved: SavedCommand[]): string {
+  const nonce = randomNonce();
+  const escaped = (value: string): string => value.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!));
+  const buttons = saved.map((item, index) => `<button class="command" data-index="${index}"><span class="spark">›</span><strong>${escaped(item.label)}</strong><small>${escaped(item.command)}</small></button>`).join('');
+  const themeOptions = themes.map(id => `<option value="${id}" ${theme === id ? 'selected' : ''}>${id.replace(/-/g, ' ').replace(/\b\w/g, x => x.toUpperCase())}</option>`).join('');
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';"><title>Galaxy Terminal X</title><style nonce="${nonce}">
+:root { color-scheme: dark; font: 14px system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin:0; min-height:100vh; color:var(--fg); background:var(--background); }
+body[data-theme="blue-circuit"] { --background:#030e36; --fg:#e7f8ff; --accent:#53dcff; --panel:rgba(3,14,45,.84); --border:#17579c; --shadow:#1a96fd; }
+body[data-theme="black-gold"] { --background:#100e09; --fg:#fff4dc; --accent:#eac36b; --panel:rgba(23,18,10,.92); --border:#715626; --shadow:#956e16; }
+body[data-theme="galaxy-purple"] { --background:#140c2d; --fg:#f3eaff; --accent:#c6a0ff; --panel:rgba(26,12,53,.9); --border:#7049ad; --shadow:#8156db; }
+body[data-theme="minimal-dark"] { --background:#17191e; --fg:#e6e9ef; --accent:#a3b7cc; --panel:#21252d; --border:#3a424e; --shadow:#333a44; }
+.backdrop { position:fixed;inset:0;pointer-events:none; opacity:.55;background: radial-gradient(circle at 70% 15%,var(--shadow),transparent 28%), repeating-linear-gradient(135deg,transparent 0 80px,rgba(57,163,255,.09) 81px 83px,transparent 84px 165px); }
+body[data-theme="blue-circuit"] .backdrop { background:radial-gradient(circle at 80% 15%,#083db8,transparent 55%), repeating-linear-gradient(45deg,transparent 0 85px,#04498a55 86px 88px,transparent 89px 175px); }
+main {position:relative;max-width:1080px;margin:auto;padding:28px;}
+header,.controls {display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.kicker {color:var(--accent);letter-spacing:.25em;font-weight:700;font-size:11px} h1 {font-size:clamp(24px,4vw,38px);margin:8px 0} p {opacity:.8}
+.panel {border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:20px;margin-top:22px;box-shadow:0 0 36px #0005;backdrop-filter:blur(10px)}
+button,select {font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:11px;cursor:pointer}
+button:hover,select:focus {border-color:var(--accent);outline-color:var(--accent)}button.primary {background:var(--accent);color:#08101e;font-weight:750}
+.grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:16px}
+.command {display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-height:92px;gap:8px}.command small {opacity:.65;overflow-wrap:anywhere}.spark{color:var(--accent)}
+label {display:block;margin-bottom:5px;color:var(--accent);font-size:12px}
+.terminal {font:13px ui-monospace,monospace;color:var(--accent);padding:14px;background:#0006;border:1px solid var(--border);border-radius:9px;margin-top:14px}
+footer {margin-top:22px;font-size:12px;opacity:.7}
+</style></head><body data-theme="${theme}"><div class="backdrop" aria-hidden="true"></div><main><header><div><div class="kicker">MASUM GALAXY / DEVELOPER TOOLS</div><h1>Terminal X <span style="color:var(--accent)">⌁</span></h1><p>Command Center · Native VS Code terminals · v1.0</p></div><div><label for="theme">Personalization / Theme</label><select id="theme" aria-label="Choose dashboard theme">${themeOptions}</select></div></header><section class="panel"><div class="controls"><div><h2>Terminal Launcher</h2><p>Open a real integrated terminal inside VS Code.</p></div><button class="primary" id="new">+ New Terminal</button></div><div class="terminal">➜ ~ Galaxy Terminal X / Ready<br>Commands are staged for review — press Enter in terminal to run.</div></section><section class="panel"><h2>Quick Commands</h2><p>Configure shortcuts via Settings → Galaxy Terminal → Saved Commands.</p><div class="grid">${buttons || '<p>No saved commands configured.</p>'}</div></section><footer>Blue Circuit theme foundation · More background images and themes can be added later.</footer></main><script nonce="${nonce}">const vscode=acquireVsCodeApi();document.getElementById('new').addEventListener('click',()=>vscode.postMessage({type:'newTerminal'}));document.getElementById('theme').addEventListener('change',e=>vscode.postMessage({type:'switchTheme',theme:e.target.value}));document.querySelectorAll('[data-index]').forEach(btn=>btn.addEventListener('click',()=>vscode.postMessage({type:'runSaved',index:Number(btn.dataset.index)})));</script></body></html>`;
+}
+function randomNonce(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 32; i++) { result += chars[Math.floor(Math.random() * chars.length)]; }
+  return result;
+}

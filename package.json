@@ -1,0 +1,108 @@
+{
+  "name": "masum-galaxy-terminal-x",
+  "displayName": "Masum Galaxy Terminal X",
+  "description": "Futuristic integrated terminal command center with workspace shortcuts and extensible themes.",
+  "version": "1.0.0",
+  "publisher": "gitwithmasum",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "terminal",
+    "commands",
+    "galaxy",
+    "productivity"
+  ],
+  "activationEvents": [
+    "onCommand:galaxyTerminal.openDashboard",
+    "onCommand:galaxyTerminal.newTerminal",
+    "onCommand:galaxyTerminal.runSavedCommand"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "galaxyTerminal.openDashboard",
+        "title": "Galaxy Terminal X: Open Dashboard",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "galaxyTerminal.newTerminal",
+        "title": "Galaxy Terminal X: New Terminal"
+      },
+      {
+        "command": "galaxyTerminal.runSavedCommand",
+        "title": "Galaxy Terminal X: Run Saved Command"
+      }
+    ],
+    "configuration": {
+      "title": "Masum Galaxy Terminal X",
+      "properties": {
+        "galaxyTerminal.theme": {
+          "type": "string",
+          "default": "blue-circuit",
+          "enum": [
+            "blue-circuit",
+            "black-gold",
+            "galaxy-purple",
+            "minimal-dark"
+          ],
+          "description": "Dashboard theme; more themes can be added later."
+        },
+        "galaxyTerminal.savedCommands": {
+          "type": "array",
+          "default": [
+            {
+              "label": "Git status",
+              "command": "git status"
+            },
+            {
+              "label": "Install dependencies",
+              "command": "npm install"
+            },
+            {
+              "label": "Run tests",
+              "command": "npm test"
+            },
+            {
+              "label": "Run dev server",
+              "command": "npm run dev"
+            }
+          ],
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "command"
+            ],
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Quick commands for your terminal. Review commands before running."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "check": "tsc --noEmit -p ./",
+    "package": "npm run compile && vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.6.3",
+    "@vscode/vsce": "^3.2.1"
+  }
+}
