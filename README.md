@@ -2,6 +2,14 @@
 
 A futuristic VS Code terminal launcher and quick-command dashboard.
 
+## v1.7 — Native Terminal Color Engine
+- Choose a Galaxy theme, then select **Apply Native Terminal Palette** in the dashboard.
+- Sets VS Code's terminal background, foreground, cursor, selection and selected ANSI colors for the **current workspace** only.
+- Colors affect **all** integrated terminals in that workspace, not just Galaxy terminals. This is an explicit opt-in, not automatic.
+- **Restore Previous Colors** recovers the prior workspace `workbench.colorCustomizations` object. The extension refuses to overwrite manual changes made since it applied the palette.
+- No terminal image background is possible using VS Code's supported native terminal API.
+- Palette operations do not change user-wide settings or PowerShell profiles.
+
 ## v1.6 — Circuit Border & Arrow Prompt
 - Both **Classic Galaxy** and **Compact Galaxy** use two-line bordered arrow prompts.
 - Classic adds theme, last PowerShell command success/failure, and optional time.

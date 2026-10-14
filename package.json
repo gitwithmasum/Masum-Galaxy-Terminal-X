@@ -2,7 +2,7 @@
   "name": "masum-galaxy-terminal-x",
   "displayName": "Masum Galaxy Terminal X",
   "description": "Galaxy-themed native PowerShell terminal with bordered prompts, command favorites, and theme gallery.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "publisher": "gitwithmasum",
   "license": "MIT",
   "engines": {
@@ -21,7 +21,9 @@
     "onCommand:galaxyTerminal.openDashboard",
     "onCommand:galaxyTerminal.newTerminal",
     "onCommand:galaxyTerminal.runSavedCommand",
-    "onCommand:galaxyTerminal.stageFromHistory"
+    "onCommand:galaxyTerminal.stageFromHistory",
+    "onCommand:galaxyTerminal.applyTerminalColors",
+    "onCommand:galaxyTerminal.restoreTerminalColors"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -42,6 +44,14 @@
       {
         "command": "galaxyTerminal.stageFromHistory",
         "title": "Galaxy Terminal X: Stage From History"
+      },
+      {
+        "command": "galaxyTerminal.applyTerminalColors",
+        "title": "Galaxy Terminal X: Apply Native Terminal Colors"
+      },
+      {
+        "command": "galaxyTerminal.restoreTerminalColors",
+        "title": "Galaxy Terminal X: Restore Previous Terminal Colors"
       }
     ],
     "configuration": {
