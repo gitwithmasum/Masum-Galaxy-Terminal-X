@@ -1,4 +1,4 @@
-# Galaxy Terminal X v1.6 - ASCII source, safe for Windows PowerShell 5.1.
+# Galaxy Terminal X v1.8 - ASCII source, safe for Windows PowerShell 5.1.
 # This prompt only affects extension-created sessions; no profile or policy edits.
 $ErrorActionPreference = 'Continue'
 $palette = switch ($env:GALAXY_TERMINAL_THEME) {
@@ -13,6 +13,8 @@ function global:prompt {
     # Snapshot last command status BEFORE probing git, time, or filesystem.
     $previousSuccess = $?
     $previousExitCode = $global:LASTEXITCODE
+    $hasNativeExit = $null -ne $previousExitCode
+    $commandWasSuccessful = $previousSuccess -and (-not $hasNativeExit -or $previousExitCode -eq 0)
     $p = $global:GalaxyTerminalPalette
     $locationText = (Get-Location).Path
     $compact = $env:GALAXY_TERMINAL_PROMPT_STYLE -eq 'compact'
@@ -34,8 +36,10 @@ function global:prompt {
     if ($env:GALAXY_TERMINAL_SHOW_TIME -eq '1') {
         $clockText = ' | ' + (Get-Date -Format 'HH:mm:ss')
     }
-    $statusText = if ($previousSuccess) { 'OK' } else { 'ERROR' }
-    $statusColor = if ($previousSuccess) { 'Green' } else { 'Red' }
+    $statusText = if ($commandWasSuccessful) { 'OK' } else { 'ERROR' }
+    $statusColor = if ($commandWasSuccessful) { 'Green' } else { 'Red' }
+    # Git probing runs its own native process; restore the previous native exit code.
+    $global:LASTEXITCODE = $previousExitCode
 
     Write-Host ''
     Write-Host ('  ' + $top + $rule + '[ ') -NoNewline -ForegroundColor $p.Secondary

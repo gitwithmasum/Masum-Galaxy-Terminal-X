@@ -2,7 +2,7 @@
   "name": "masum-galaxy-terminal-x",
   "displayName": "Masum Galaxy Terminal X",
   "description": "Galaxy-themed native PowerShell terminal with bordered prompts, command favorites, and theme gallery.",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "publisher": "gitwithmasum",
   "license": "MIT",
   "engines": {
@@ -155,12 +155,21 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "check": "tsc --noEmit -p ./",
-    "package": "npm run compile && vsce package"
+    "package": "npm run compile && vsce package --no-dependencies",
+    "verify:vsix": "node scripts/verify-vsix.cjs"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.90.0",
     "typescript": "^5.6.3",
     "@vscode/vsce": "^3.2.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitwithmasum/Masum-Galaxy-Terminal-X.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gitwithmasum/Masum-Galaxy-Terminal-X/issues"
+  },
+  "homepage": "https://github.com/gitwithmasum/Masum-Galaxy-Terminal-X#readme"
 }

@@ -2,6 +2,14 @@
 
 A futuristic VS Code terminal launcher and quick-command dashboard.
 
+## v1.8 — Release polish & VSIX verification
+- Packaging script builds a VSIX without bundling development dependencies.
+- GitHub Actions now packages and uploads the VSIX as a CI artifact if successful.
+- Versioned changelog and repository metadata for Marketplace preparation.
+- PowerShell Git probe restores the previous native exit code after checking branch state.
+- Typecheck and Windows PowerShell 5.1 parser checks remain part of CI.
+- Marketplace icon/banner and real installed-extension smoke testing remain pending.
+
 ## v1.7 — Native Terminal Color Engine
 - Choose a Galaxy theme, then select **Apply Native Terminal Palette** in the dashboard.
 - Sets VS Code's terminal background, foreground, cursor, selection and selected ANSI colors for the **current workspace** only.
