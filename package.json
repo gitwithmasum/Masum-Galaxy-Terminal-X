@@ -1,8 +1,8 @@
 {
   "name": "masum-galaxy-terminal-x",
   "displayName": "Masum Galaxy Terminal X",
-  "description": "Galaxy-themed native PowerShell terminal with bordered prompts, command favorites, and theme gallery.",
-  "version": "1.9.0",
+  "description": "Futuristic VS Code PowerShell prompts, terminal palettes, themes, quick commands and a Galaxy command dashboard.",
+  "version": "2.0.0",
   "publisher": "gitwithmasum",
   "license": "MIT",
   "engines": {

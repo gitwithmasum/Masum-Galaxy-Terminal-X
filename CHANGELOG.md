@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.0] - 2026-10-15
+- Final QA package integrity checks for compiled extension, PowerShell script and bundled media.
+- README refresh, release documentation and Marketplace smoke-test checklist.
+- No breaking changes to terminal profiles, themes, prompts or saved commands.
+
 ## [1.9.0] - 2026-10-15
 - Blue Circuit Marketplace PNG icon and repository README banner.
 - Marketplace gallery theme metadata and extended discoverability keywords.

@@ -1,120 +1,82 @@
 # Masum Galaxy Terminal X
 
-![Galaxy Terminal X promotional banner](media/Masum%20Galaxy%20Terminal%20X%20Showcase.png)
+![Masum Galaxy Terminal X Showcase](media/Masum%20Galaxy%20Terminal%20X%20Showcase.png)
 
-A futuristic VS Code terminal launcher and quick-command dashboard.
+Futuristic **VS Code terminal companion** with Galaxy-styled PowerShell prompts, optional native terminal palettes, quick-command presets, command history and visual themes.
 
-## v1.9 — Marketplace Branding
-- Generated PNG Marketplace icon at `media/icon.png` and README hero banner at `media/Masum%20Galaxy%20Terminal%20X%20Showcase.png`.
-- `package.json` references the icon and specifies a dark-blue Marketplace gallery theme.
-- The artwork reflects a terminal glyph and Blue Circuit identity. The README banner can be replaced with a custom asset later.
-- Ready for VSIX packaging checks; no Marketplace publish has been performed.
-- Review the live extension appearance, README images and icon in a local installed VSIX before publishing.
+> **Compatibility:** VS Code 1.90+; Galaxy PowerShell prompt requires Windows PowerShell. Dashboard and VS Code-default-shell launch work on other supported operating systems.
 
-## v1.8 — Release polish & VSIX verification
-- Packaging script builds a VSIX without bundling development dependencies.
-- GitHub Actions now packages and uploads the VSIX as a CI artifact if successful.
-- Versioned changelog and repository metadata for Marketplace preparation.
-- PowerShell Git probe restores the previous native exit code after checking branch state.
-- Typecheck and Windows PowerShell 5.1 parser checks remain part of CI.
-- Marketplace icon/banner and real installed-extension smoke testing remain pending.
+## Features
 
-## v1.7 — Native Terminal Color Engine
-- Choose a Galaxy theme, then select **Apply Native Terminal Palette** in the dashboard.
-- Sets VS Code's terminal background, foreground, cursor, selection and selected ANSI colors for the **current workspace** only.
-- Colors affect **all** integrated terminals in that workspace, not just Galaxy terminals. This is an explicit opt-in, not automatic.
-- **Restore Previous Colors** recovers the prior workspace `workbench.colorCustomizations` object. The extension refuses to overwrite manual changes made since it applied the palette.
-- No terminal image background is possible using VS Code's supported native terminal API.
-- Palette operations do not change user-wide settings or PowerShell profiles.
+- **Galaxy PowerShell:** Classic or Compact bordered prompts, arrows, optional Git branch and clock.
+- **Four themes:** Blue Circuit, Black & Gold, Galaxy Purple, Minimal Dark.
+- **Theme dashboard:** Original Blue Circuit background artwork, circuit SVG fallback and theme gallery.
+- **Native terminal color engine:** Optional workspace-only colors with **Restore Previous Colors**.
+- **Productivity:** Saved quick commands, workspace favorites and recently **staged** commands.
+- **Safe command staging:** Commands appear in a real integrated terminal and are **not executed until you press Enter**.
 
-## v1.6 — Circuit Border & Arrow Prompt
-- Both **Classic Galaxy** and **Compact Galaxy** use two-line bordered arrow prompts.
-- Classic adds theme, last PowerShell command success/failure, and optional time.
-- Enable `galaxyTerminal.showGitBranch` to display the current Git branch (off by default to avoid a Git process on every prompt).
-- `galaxyTerminal.showClock` controls clock display (on by default for classic style).
-- The status indicator is based on PowerShell's previous command success; it is not a complete process exit-code audit.
-- Styling is terminal text/ANSI color only, not an image-based native terminal background.
-- Script stays ASCII-only for Windows PowerShell 5.1 and uses runtime Unicode code points for border glyphs.
-- Settings are applied when you open a **new** Galaxy PowerShell terminal.
+## Get started
 
-## v1.5 — Background Source Selector & Theme Asset Foundation
-- Blue Circuit offers an SVG option and **Original Photo** option in Theme Gallery.
-- Original Photo looks for `media/themes/blue-circuit-bg.png`. The separately delivered asset pack contains this exact user-provided image. Copy it into your local repo and push the binary with Git.
-- The default remains the bundled SVG, so existing installations do not break when the optional PNG is absent.
-- The selected background mode persists in VS Code settings; switching themes does not erase it.
-- No full native terminal background replacement: the image belongs to the extension dashboard webview.
+Open the Command Palette (`Ctrl+Shift+P`) and run:
 
-## v1.4 — Advanced Terminal UI & Theme Gallery
-- New dashboard status tiles and interactive theme gallery.
-- Bundled circuit-inspired **SVG** for Blue Circuit (not the original uploaded PNG).
-- Theme cards and dropdown persist the selected palette in VS Code settings.
-- Native terminal profile, prompt, favorites and staging features are preserved.
+1. **Galaxy Terminal X: Open Dashboard**.
+2. Select **Galaxy PowerShell**, choose a theme and prompt style.
+3. Click **New Terminal** to open the styled native PowerShell session.
 
-## v1.3 — Smart Terminal Productivity
-- Star or unstar saved commands in the dashboard; favorites are saved per workspace.
-- Recently **staged** commands are displayed in dashboard and available through **Galaxy Terminal X: Stage From History**.
-- History is intentionally not an execution log of the native shell. It stores up to 30 staged commands and can be cleared.
-- Workspace-specific commands: set `galaxyTerminal.savedCommands` in your project's `.vscode/settings.json`; other workspaces may define different lists.
-- Favorites and history are saved using VS Code workspace state, not uploaded anywhere.
-- All actions stage text for review; user presses Enter to run commands.
+To customize the native terminal background color, choose a theme and click **Apply Native Terminal Palette**. This action changes VS Code terminal colors for **all integrated terminals in the current workspace**, only after your confirmation. Use **Restore Previous Colors** to undo it.
 
-## v1.2 — Terminal Profiles & Prompt Customization
-- Dashboard profile selector: Galaxy PowerShell, Windows CMD or VS Code Default.
-- Prompt styles: Classic Galaxy and Compact Galaxy (PowerShell only).
-- Theme and profile selections are stored in VS Code settings and affect **new** sessions.
-- Windows CMD and PowerShell are Windows-only; on other operating systems the VS Code default shell is used.
-- No changes to the global VS Code terminal, user PowerShell profile or execution policy.
+**Limitation:** VS Code's supported native terminal UI cannot show a circuit wallpaper. The image backgrounds appear in the dashboard; the integrated terminal uses a solid-color palette.
 
-## v1.1 — Futuristic Native PowerShell Prompt
-On Windows, **Galaxy Terminal X: New Terminal** now launches a dedicated PowerShell session with a startup banner, location-aware neon prompt and theme-specific colors. This is a real terminal, not an emulated shell. It does **not** change the global PowerShell profile or VS Code's default terminal. Theme updates apply to newly created terminal sessions. Disable with `galaxyTerminal.enableGalaxyPrompt: false`. On macOS/Linux, the default terminal is used.
+## Commands
 
-## v1.0 Foundation
-- **Galaxy Terminal X: Open Dashboard** from Command Palette
-- **Galaxy Terminal X: New Terminal** to open a native VS Code terminal
-- **Galaxy Terminal X: Run Saved Command** to select a saved command
-- Safe review-first execution: commands are inserted into the terminal **without pressing Enter**
-- Theme switcher saves the selected theme globally
-- Default **Blue Circuit** theme with CSS circuit-inspired backdrop; the user-provided exact background image is reserved for a subsequent media-asset step
-- Additional foundation palettes: Black & Gold, Galaxy Purple, Minimal Dark
-- Fully local operation; no telemetry or remote calls
+| Command | Description |
+| --- | --- |
+| Galaxy Terminal X: Open Dashboard | Open command center and themes |
+| Galaxy Terminal X: New Terminal | Launch configured terminal profile |
+| Galaxy Terminal X: Run Saved Command | Stage a saved command |
+| Galaxy Terminal X: Stage From History | Reuse a previously staged command |
+| Galaxy Terminal X: Apply Native Terminal Colors | Apply palette to workspace |
+| Galaxy Terminal X: Restore Previous Terminal Colors | Restore saved workspace colors |
 
-## Development
-Requirements: Node.js 20+ and VS Code 1.90+.
+## Settings
+
+```json
+{
+  "galaxyTerminal.theme": "blue-circuit",
+  "galaxyTerminal.shellProfile": "powershell",
+  "galaxyTerminal.promptStyle": "classic",
+  "galaxyTerminal.showGitBranch": true,
+  "galaxyTerminal.showClock": true
+}
+```
+
+Available shell profiles: `powershell`, `cmd` (Windows), or `default` (uses VS Code's selected shell). The Galaxy prompt is active in dedicated Galaxy PowerShell sessions only.
+
+Set `galaxyTerminal.savedCommands` in workspace `.vscode/settings.json` to store commands for a specific project. Favorites and recently staged commands are local to the workspace.
+
+## Install from VSIX
+
+Download the successful **galaxy-terminal-x-vsix** artifact from [GitHub Actions](https://github.com/gitwithmasum/Masum-Galaxy-Terminal-X/actions), extract it, then open VS Code → Extensions → `...` → **Install from VSIX...**.
+
+To build locally:
 
 ```powershell
 npm install
 npm run check
-npm run compile
-```
-Open in VS Code and press **F5** (Extension Development Host). Open Command Palette (`Ctrl+Shift+P`) and run **Galaxy Terminal X: Open Dashboard**.
-
-## Configure commands
-VS Code Settings → search `galaxyTerminal.savedCommands`, edit in `settings.json`:
-
-```json
-"galaxyTerminal.savedCommands": [
-  { "label": "Git status", "command": "git status" },
-  { "label": "Run tests", "command": "npm test" }
-]
+npm run package
+npm run verify:vsix
 ```
 
-Select a command, inspect it in the native VS Code terminal, then press Enter to execute.
+The VSIX filename follows `masum-galaxy-terminal-x-<version>.vsix`.
 
-## v1.1 quick start
-1. `npm install` and `npm run compile`.
-2. F5 → Extension Development Host.
-3. Run **Galaxy Terminal X: New Terminal** from Command Palette, or click **+ New Terminal** in the Galaxy dashboard.
-4. Select a new theme in the dashboard and open another Galaxy terminal to see its colors.
+## Development & release
 
-**Note:** The regular VS Code Terminal > New Terminal menu remains unchanged; VS Code extensions cannot globally skin the terminal panel.
+Open this repository in VS Code. Press `F5` or use Run and Debug → **Run Galaxy Terminal X** to start an Extension Development Host. The explicit build task compiles before launching.
 
-## Roadmap
-- Import the supplied Blue Circuit background artwork as `media/themes/blue-circuit-bg.png`
-- Add more user-selected image-based themes with asset management
-- Terminal profile picker, workspace profiles, command history & shortcuts
-- Tests, CI, icons, banner and Marketplace release readiness
+See [Release Checklist](docs/RELEASE_CHECKLIST.md), [Changelog](CHANGELOG.md), and [Issues](https://github.com/gitwithmasum/Masum-Galaxy-Terminal-X/issues).
 
-## Security
-Webview uses restrictive Content Security Policy with a per-render nonce. User-authored labels and command strings are HTML-escaped. Webview messages reference saved-command indices rather than accepting arbitrary commands. No command executes automatically.
+## Security & privacy
+
+No telemetry or remote calls are included. User command labels are HTML-escaped in the dashboard, the webview uses a restrictive Content Security Policy, and saved commands are staged rather than executed automatically. Palette changes require confirmation and preserve prior workspace colors for restoration.
 
 MIT License.
