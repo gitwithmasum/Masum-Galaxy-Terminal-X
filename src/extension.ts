@@ -52,7 +52,9 @@ export function activate(context: vscode.ExtensionContext): void {
         shellArgs: ['-NoLogo', '-NoExit', '-File', script],
         env: {
           GALAXY_TERMINAL_THEME: currentTheme(),
-          GALAXY_TERMINAL_PROMPT_STYLE: config().get<PromptStyle>('promptStyle', 'classic')
+          GALAXY_TERMINAL_PROMPT_STYLE: config().get<PromptStyle>('promptStyle', 'classic'),
+          GALAXY_TERMINAL_SHOW_GIT: config().get<boolean>('showGitBranch', false) ? '1' : '0',
+          GALAXY_TERMINAL_SHOW_TIME: config().get<boolean>('showClock', true) ? '1' : '0'
         }
       };
     } else if (process.platform === 'win32' && profile === 'powershell') {

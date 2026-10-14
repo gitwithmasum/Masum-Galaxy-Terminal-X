@@ -2,6 +2,16 @@
 
 A futuristic VS Code terminal launcher and quick-command dashboard.
 
+## v1.6 — Circuit Border & Arrow Prompt
+- Both **Classic Galaxy** and **Compact Galaxy** use two-line bordered arrow prompts.
+- Classic adds theme, last PowerShell command success/failure, and optional time.
+- Enable `galaxyTerminal.showGitBranch` to display the current Git branch (off by default to avoid a Git process on every prompt).
+- `galaxyTerminal.showClock` controls clock display (on by default for classic style).
+- The status indicator is based on PowerShell's previous command success; it is not a complete process exit-code audit.
+- Styling is terminal text/ANSI color only, not an image-based native terminal background.
+- Script stays ASCII-only for Windows PowerShell 5.1 and uses runtime Unicode code points for border glyphs.
+- Settings are applied when you open a **new** Galaxy PowerShell terminal.
+
 ## v1.5 — Background Source Selector & Theme Asset Foundation
 - Blue Circuit offers an SVG option and **Original Photo** option in Theme Gallery.
 - Original Photo looks for `media/themes/blue-circuit-bg.png`. The separately delivered asset pack contains this exact user-provided image. Copy it into your local repo and push the binary with Git.
