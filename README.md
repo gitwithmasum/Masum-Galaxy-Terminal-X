@@ -73,7 +73,7 @@ The VSIX filename follows `masum-galaxy-terminal-x-<version>.vsix`.
 
 Open this repository in VS Code. Press `F5` or use Run and Debug → **Run Galaxy Terminal X** to start an Extension Development Host. The explicit build task compiles before launching.
 
-See [Release Checklist](docs/RELEASE_CHECKLIST.md), [Changelog](CHANGELOG.md), and [Issues](https://github.com/gitwithmasum/Masum-Galaxy-Terminal-X/issues).
+See [Marketplace Automated Publishing](docs/MARKETPLACE_PUBLISHING.md), [Release Checklist](docs/RELEASE_CHECKLIST.md), [Changelog](CHANGELOG.md), and [Issues](https://github.com/gitwithmasum/Masum-Galaxy-Terminal-X/issues).
 
 ## Security & privacy
 

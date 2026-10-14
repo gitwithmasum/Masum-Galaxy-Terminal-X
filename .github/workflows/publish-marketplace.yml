@@ -1,0 +1,61 @@
+name: Publish VS Code Marketplace
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marketplace-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-prompt-check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse PowerShell prompt with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'scripts/galaxy-prompt.ps1').Path, [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) { $errors | Format-List | Out-String | Write-Host; exit 1 }
+
+  publish:
+    needs: windows-prompt-check
+    runs-on: ubuntu-latest
+    environment: marketplace
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact release tag and package version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node -e "const fs=require('fs'); const v=JSON.parse(fs.readFileSync('package.json','utf8')).version; const tag=process.env.RELEASE_TAG; if (!/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(tag) || tag !== 'v'+v) { console.error('Release tag must equal package.json version: '+tag+' != v'+v); process.exit(1) }"
+      - name: Install dependencies
+        run: npm install
+      - name: Typecheck
+        run: npm run check
+      - name: Build VSIX
+        run: npm run package
+      - name: Verify exact VSIX contents
+        run: npm run verify:vsix
+      - name: Publish verified VSIX with Marketplace OIDC
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${RELEASE_TAG#v}"
+          npx --yes @vscode/vsce@4.0.0 publish --oidc --packagePath "masum-galaxy-terminal-x-${VERSION}.vsix"
