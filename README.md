@@ -2,6 +2,13 @@
 
 A futuristic VS Code terminal launcher and quick-command dashboard.
 
+## v1.5 — Background Source Selector & Theme Asset Foundation
+- Blue Circuit offers an SVG option and **Original Photo** option in Theme Gallery.
+- Original Photo looks for `media/themes/blue-circuit-bg.png`. The separately delivered asset pack contains this exact user-provided image. Copy it into your local repo and push the binary with Git.
+- The default remains the bundled SVG, so existing installations do not break when the optional PNG is absent.
+- The selected background mode persists in VS Code settings; switching themes does not erase it.
+- No full native terminal background replacement: the image belongs to the extension dashboard webview.
+
 ## v1.4 — Advanced Terminal UI & Theme Gallery
 - New dashboard status tiles and interactive theme gallery.
 - Bundled circuit-inspired **SVG** for Blue Circuit (not the original uploaded PNG).

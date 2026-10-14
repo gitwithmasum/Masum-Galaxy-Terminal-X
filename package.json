@@ -2,7 +2,7 @@
   "name": "masum-galaxy-terminal-x",
   "displayName": "Masum Galaxy Terminal X",
   "description": "Futuristic Galaxy terminal launcher with an optional themed PowerShell prompt, command dashboard and saved presets.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "publisher": "gitwithmasum",
   "license": "MIT",
   "engines": {
@@ -118,6 +118,15 @@
             "compact"
           ],
           "description": "Prompt layout for new Galaxy PowerShell sessions."
+        },
+        "galaxyTerminal.backgroundMode": {
+          "type": "string",
+          "default": "circuit",
+          "enum": [
+            "circuit",
+            "original"
+          ],
+          "description": "Blue Circuit background asset: bundled SVG, or original PNG copied to media/themes/blue-circuit-bg.png."
         }
       }
     }
