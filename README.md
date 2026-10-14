@@ -1,6 +1,15 @@
 # Masum Galaxy Terminal X
 
+![Galaxy Terminal X promotional banner](media/galaxy-terminal-x-banner.png)
+
 A futuristic VS Code terminal launcher and quick-command dashboard.
+
+## v1.9 — Marketplace Branding
+- Generated PNG Marketplace icon at `media/icon.png` and README hero banner at `media/galaxy-terminal-x-banner.png`.
+- `package.json` references the icon and specifies a dark-blue Marketplace gallery theme.
+- The artwork reflects a terminal glyph and Blue Circuit identity. The README banner can be replaced with a custom asset later.
+- Ready for VSIX packaging checks; no Marketplace publish has been performed.
+- Review the live extension appearance, README images and icon in a local installed VSIX before publishing.
 
 ## v1.8 — Release polish & VSIX verification
 - Packaging script builds a VSIX without bundling development dependencies.

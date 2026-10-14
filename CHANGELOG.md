@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.0] - 2026-10-15
+- Blue Circuit Marketplace PNG icon and repository README banner.
+- Marketplace gallery theme metadata and extended discoverability keywords.
+
 ## [1.8.0] - 2026-10-14
 - VSIX packaging and CI artifact verification.
 - Restore PowerShell native exit code after optional Git branch inspection.
